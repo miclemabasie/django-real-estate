@@ -52,6 +52,8 @@ LOCAL_APPS = [
     "apps.users.apps.UsersConfig",
     "apps.profiles.apps.ProfilesConfig",
     "apps.ratings",
+    "apps.properties.apps.PropertiesConfig",
+    "apps.enquiries.apps.EnquiriesConfig"
 ]
 
 
