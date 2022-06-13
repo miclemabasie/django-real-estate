@@ -1,8 +1,6 @@
-from rest_framework.exceptions import ApiException
+from rest_framework.exceptions import APIException
 
 
-class PropertyNotFound(ApiException):
+class PropertyNotFound(APIException):
     status = 404
-    default_detail ="The requested property does not exist!"
-
-    
+    default_detail = "The requested property does not exist!"

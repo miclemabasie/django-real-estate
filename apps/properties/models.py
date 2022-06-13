@@ -63,7 +63,7 @@ class Property(TimeStampedUUIDModel):
     street_address = models.CharField(
         verbose_name=_("Street Address"), max_length=150, default="KG8 Avenue"
     )
-    perperty_number = models.IntegerField(
+    property_number = models.IntegerField(
         verbose_name=_("Property Number"),
         validators=[MinValueValidator(1)],
         default=122,
@@ -85,7 +85,7 @@ class Property(TimeStampedUUIDModel):
         max_length=100,
     )
     plot_area = models.DecimalField(
-        verbose_name=_("Plot Area"), max_digits=8, decimal_places=2, default=0.0
+        verbose_name=_("Plot Area(m^2"), max_digits=8, decimal_places=2, default=0.0
     )
     total_floors = models.IntegerField(verbose_name=_("Number of Floors"), default=0)
     bedrooms = models.IntegerField(verbose_name=_("Bedrooms"), default=1)
@@ -106,25 +106,25 @@ class Property(TimeStampedUUIDModel):
         blank=True,
     )
     photo1 = models.ImageField(
-        verbose_name=_("Cover Photo"),
+        verbose_name=_("Photo1"),
         default="/inerior_sample.jpg",
         null=True,
         blank=True,
     )
     photo2 = models.ImageField(
-        verbose_name=_("Cover Photo"),
+        verbose_name=_("Photo2"),
         default="/inerior_sample.jpg",
         null=True,
         blank=True,
     )
     photo3 = models.ImageField(
-        verbose_name=_("Cover Photo"),
+        verbose_name=_("Photo3"),
         default="/inerior_sample.jpg",
         null=True,
         blank=True,
     )
     photo4 = models.ImageField(
-        verbose_name=_("Cover Photo"),
+        verbose_name=_("Photo4"),
         default="/inerior_sample.jpg",
         null=True,
         blank=True,
@@ -146,9 +146,9 @@ class Property(TimeStampedUUIDModel):
 
     def save(self, *args, **kwargs):
         self.title = str.title(self.title)
-        self.description = str.description(self.description)
+        self.description = str.capitalize(self.description)
         self.ref_code = "".join(
-            random.choices(string.ascii_uppercase, +string.digits, k=10)
+            random.choices(string.ascii_uppercase + string.digits, k=10)
         )
 
         super(Property, self).save(*args, **kwargs)
@@ -158,12 +158,12 @@ class Property(TimeStampedUUIDModel):
         tax_percentage = self.tax
         property_price = self.price
         tax_amount = round(tax_percentage * property_price, 2)
-        price_after_tax = float(round(property_price * tax_amount, 2))
+        price_after_tax = float(round(property_price + tax_amount, 2))
 
         return price_after_tax
 
 
-class ProPertyVeiws(TimeStampedUUIDModel):
+class PropertyViews(TimeStampedUUIDModel):
     ip = models.CharField(verbose_name=_("IP Address"), max_length=250)
     property = models.ForeignKey(
         Property, related_name="property_view", on_delete=models.CASCADE
@@ -177,6 +177,3 @@ class ProPertyVeiws(TimeStampedUUIDModel):
     class Meta:
         verbose_name = "Total Views on Property"
         verbose_name_plural = "Total Property Views"
-
-
-# Create your models here.
