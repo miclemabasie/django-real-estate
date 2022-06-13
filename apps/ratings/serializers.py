@@ -14,4 +14,4 @@ class RatingSerializer(serializers.ModelSerializer):
         return obj.rater.username
 
     def get_agent(self, obj):
-        return obj.agent.profile.username
+        return obj.agent.user.username
