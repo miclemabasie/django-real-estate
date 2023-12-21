@@ -4,9 +4,10 @@ set -o errexit
 
 set -o nounset
 
+# echo "Waiting for celery to start"
 
 worker_ready() {
-celery -A real_estate inpect ping 
+celery -A real_estate inspect ping 
 
 }
 
@@ -18,7 +19,9 @@ done
 exec "$@"
 
 
-flower \
-    --app=real_estate \
-    --broker="${CELERY_BROKER_URL}" \
+# flower \
+#     --app=real_estate \
+#     --broker="${CELERY_BROKER_URL}" \
 
+celery -A real_estate flower \
+    --broker="${CELERY_BROKER_URL}" \
