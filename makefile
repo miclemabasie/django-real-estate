@@ -34,6 +34,9 @@ collecstatic:
 django-check:
 	docker-compose exec api python manage.py check
 
+init_db:
+	docker-compose exec api python manage.py init_db 10
+
 shell:	
 	docker-compose exec api python manage.py shell
 

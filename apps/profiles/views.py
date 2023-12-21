@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from .pagination import ProfilePagination
 
 from .exceptions import NotYourProfileError, ProfileDoesNotExist
 from .models import Profile
@@ -89,3 +90,13 @@ class ProfileUpdateAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class GetAllProfilesAPIView(generics.ListAPIView):
+    renderer_classes = [ProfileJSONRenderer]
+    serializer_class = ProfileSerializer
+    # set up pagination for profiles
+    pagination_class = ProfilePagination
+
+    def get_queryset(self):
+        return Profile.objects.all()
