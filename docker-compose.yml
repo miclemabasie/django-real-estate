@@ -1,0 +1,111 @@
+version: '3.9'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: ./docker/local/django/Dockerfile
+    command: /start
+
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/mediafiles
+      # - ./docker/local/django/start.sh:/start.sh
+      # ports:
+      #   - 8000:8000
+    env_file:
+      - .env
+    depends_on:
+      - postgres-db
+      - redis
+    networks:
+      - estate-react-network
+
+  postgres-db:
+    image: postgres:12.0-alpine
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    networks:
+      - estate-react-network
+
+  redis:
+    image: redis:6.0.9-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - estate-react-network
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: ./docker/local/django/Dockerfile
+    command: /start-celeryworker
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - postgres-db
+    networks:
+      - estate-react-network
+
+  flower:
+    build:
+      context: .
+      dockerfile: ./docker/local/django/Dockerfile
+    command: /start-flower
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    ports:
+      - 5557:5555
+    depends_on:
+      - celery_worker
+      - redis
+      - postgres-db
+    networks:
+      - estate-react-network
+
+  # nginx: configuration for nginx
+  nginx:
+    restart: always
+    depends_on:
+      - api
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/mediafiles
+    build:
+      context: ./docker/local/nginx
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    networks:
+      - estate-react-network
+
+networks:
+  estate-react-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+
+    # web:
+    #   build: .
+    #   command: python manage.py runserver 0.0.0.0:8000
+    #   volumes:
+    #     - .:/code
+    #   ports:
+    #     - 8000:8000
+    #   depends_on:
+    #     - db

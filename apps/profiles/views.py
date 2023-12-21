@@ -1,75 +1,91 @@
+from django.shortcuts import render
 from rest_framework import generics, permissions, status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view, permission_classes
-from .exceptions import NotYourProfile, ProfileNotFound
+
+from .exceptions import NotYourProfileError, ProfileDoesNotExist
 from .models import Profile
 from .renderers import ProfileJSONRenderer
 from .serializers import ProfileSerializer, UpdateProfileSerializer
 
 
 class AgentListAPIView(generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-    queryset = Profile.objects.filter(is_agent=True)
+    renderer_classes = (ProfileJSONRenderer,)
     serializer_class = ProfileSerializer
 
+    def get(self, request, format=None):
+        agents = Profile.objects.filter(is_agent=True)
+        serializer = self.serializer_class(agents, many=True)
+        return Response(serializer.data)
 
 
-@api_view(["GET", "POST"])
-@permission_classes((permissions.IsAuthenticated,))
+"""
+# Function-based view
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def agent_list_api_view(request):
-    queryset = Profile.objects.filter(agent=True)
-    serializer = ProfileSerializer(queryset, many=True)
-    name_spaced_response = {"agents": serializer.data}
-    return Response(name_spaced_response, status_code=status.HTTP_200_OK)
+    agents = Profile.objects.filter(is_agent=True)
+    serializer = ProfileSerializer(agents, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+"""
 
 
-class TopAgentListAPIView(generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-    queryset = Profile.objects.filter(is_agent=True, top_agent=True)
+class TopAgentsListAPIView(generics.ListAPIView):
+    renderer_classes = [ProfileJSONRenderer]
     serializer_class = ProfileSerializer
 
-
-@api_view(("GET",))
-def get_top_agent_list(request):
-    agents = Profile.objects.filter(is_agent=True, top_agent=True)
-    serializer = ProfileSerializer(agents, many=True)
-    name_spaced_response = {"agents": serializer.data}
-    return Response(name_spaced_response, status.HTTP_200_OK)
+    def get(self, request, format=None):
+        agents = Profile.objects.filter(top_agent=True)
+        serializer = self.serializer_class(agents, many=True)
+        return Response(serializer.data)
 
 
 class GetProfileAPIView(APIView):
-    permission_classes = [permissions.AllowAny]
     renderer_classes = [ProfileJSONRenderer]
+    serializer_class = ProfileSerializer
+    permission_classes = [IsAuthenticated]
 
+    # def get(self, request, format=None):
+    #     serializer = self.serializer_class(
+    #         instance=request.user.profile, context={"request": request}
+    #     )
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
 
     def get(self, request):
-        user = self.request.user
-        user_profile = Profile.objects.get(user=user)
-        serializer = ProfileSerializer(user_profile, context={"request": request})
+        user = request.user
+        profile = Profile.objects.get(user=user)
+        serializer = ProfileSerializer(profile, context={"request": request})
+        return Response(serializer.data)
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
-class UpdateProfileAPIView(APIView):
-    perrmission_classes = [permissions.IsAuthenticated]
+class ProfileUpdateAPIView(APIView):
     renderer_classes = [ProfileJSONRenderer]
+    serializer_class = UpdateProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    # def put(self, request, format=None):
+    #     serializer = self.serializer_class(
+    #         request.user.profile, data=request.data, partial=True
+    #     )
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.save()
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
 
     def patch(self, request, username):
         try:
-            Profile.objects.get(user__username=username)
+            profile = Profile.objects.get(user__username=username)
         except Profile.DoesNotExist:
-            raise ProfileNotFound
+            raise ProfileDoesNotExist("Profile does not exist")
 
         user_name = request.user.username
         if user_name != username:
-            raise NotYourProfile
+            raise NotYourProfileError("Not your profile to update")
 
-        data = request.data
-        serializer = UpdateProfileSerializer(
-            instance=request.user.profile, data=data, partial=True
+        serializer = self.serializer_class(
+            instance=request.user.profile, data=request.data, partial=True
         )
-
-        serializer.is_valid()
+        serializer.is_valid(raise_exception=True)
         serializer.save()
-
         return Response(serializer.data, status=status.HTTP_200_OK)

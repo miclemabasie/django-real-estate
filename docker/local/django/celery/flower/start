@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -o errexit
+
+set -o nounset
+
+
+worker_ready() {
+celery -A real_estate inpect ping 
+
+}
+
+until worker_ready; do
+    >&2 echo 'Celery worker is unavailable - sleeping'
+    sleep 1
+done 
+    >&2 echo 'Celery worker is up - continuing...'
+exec "$@"
+
+
+flower \
+    --app=real_estate \
+    --broker="${CELERY_BROKER_URL}" \
+
