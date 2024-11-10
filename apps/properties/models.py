@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
 
+
 from apps.common.models import TimeStampedUUIDModel
 
 User = get_user_model()

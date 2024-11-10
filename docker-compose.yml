@@ -96,7 +96,6 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:
   static_volume:
   media_volume:
 
@@ -109,3 +108,9 @@ volumes:
     #     - 8000:8000
     #   depends_on:
     #     - db
+#  "172.25.0.1",
+#                     "IPAddress": "172.25.0.3",
+#                     "IPPrefixLen": 16,
+
+#                     "Gateway": "172.25.0.1",
+#                     "IPAddress": "172.25.0.2",
